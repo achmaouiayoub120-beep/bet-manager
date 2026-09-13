@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  engineer
+  technician
+  viewer
+}
+
+enum ProjectStatus {
+  planning
+  in_progress
+  on_hold
+  completed
+  cancelled
+}
+
+enum PlanType {
+  architectural
+  structural
+  electrical
+  plumbing
+  other
+}
+
+enum PlanFormat {
+  A0
+  A1
+  A2
+  A3
+  A4
+}
+
+enum PlanStatus {
+  draft
+  review
+  approved
+  rejected
+  obsolete
+}
+
+enum ReportType {
+  technical
+  progress
+  inspection
+  calculation
+  other
+}
+
+enum ReportStatus {
+  draft
+  submitted
+  approved
+  rejected
+}
+
+enum DocumentType {
+  specification
+  contract
+  certificate
+  photo
+  other
+}
+
+model User {
+  id            Int           @id @default(autoincrement())
+  username      String        @unique @db.VarChar(50)
+  email         String        @unique @db.VarChar(100)
+  passwordHash  String        @map("password_hash") @db.VarChar(255)
+  fullName      String        @map("full_name") @db.VarChar(100)
+  role          Role          @default(viewer)
+  isActive      Boolean       @default(true) @map("is_active")
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  projects      Project[]     @relation("ProjectCreator")
+  plans         Plan[]        @relation("PlanCreator")
+  planVersions  PlanVersion[] @relation("PlanVersionCreator")
+  reports       Report[]      @relation("ReportCreator")
+  documents     Document[]    @relation("DocumentUploader")
+  activityLogs  ActivityLog[] @relation("UserActivityLogs")
+
+  @@map("users")
+}
+
+model Project {
+  id          Int           @id @default(autoincrement())
+  projectCode String        @unique @map("project_code") @db.VarChar(20)
+  name        String        @db.VarChar(200)
+  description String?       @db.Text
+  clientName  String?       @map("client_name") @db.VarChar(100)
+  location    String?       @db.VarChar(200)
+  startDate   DateTime?     @map("start_date") @db.Date
+  endDate     DateTime?     @map("end_date") @db.Date
+  status      ProjectStatus @default(planning)
+  budget      Decimal?      @db.Decimal(15, 2)
+  createdBy   Int?          @map("created_by")
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  creator     User?         @relation("ProjectCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  plans       Plan[]
+  reports     Report[]
+  documents   Document[]
+
+  @@map("projects")
+}
+
+model Plan {
+  id          Int          @id @default(autoincrement())
+  planCode    String       @unique @map("plan_code") @db.VarChar(50)
+  title       String       @db.VarChar(200)
+  description String?      @db.Text
+  projectId   Int          @map("project_id")
+  planType    PlanType     @default(structural) @map("plan_type")
+  scale       String?      @db.VarChar(20)
+  format      PlanFormat   @default(A3)
+  status      PlanStatus   @default(draft)
+  createdBy   Int?         @map("created_by")
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator     User?        @relation("PlanCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  versions    PlanVersion[]
+
+  @@map("plans")
+}
+
+model PlanVersion {
+  id               Int      @id @default(autoincrement())
+  planId           Int      @map("plan_id")
+  versionNumber    String   @map("version_number") @db.VarChar(20)
+  filePath         String   @map("file_path") @db.VarChar(255)
+  fileName         String   @map("file_name") @db.VarChar(255)
+  fileSize         Int?     @map("file_size")
+  changeDescription String? @map("change_description") @db.Text
+  createdBy        Int?     @map("created_by")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  plan             Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  creator          User?    @relation("PlanVersionCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@map("plan_versions")
+}
+
+model Report {
+  id         Int          @id @default(autoincrement())
+  reportCode String       @unique @map("report_code") @db.VarChar(50)
+  title      String       @db.VarChar(200)
+  content    String?      @db.Text
+  projectId  Int?         @map("project_id")
+  reportType ReportType   @default(technical) @map("report_type")
+  status     ReportStatus @default(draft)
+  createdBy  Int?         @map("created_by")
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  project    Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  creator    User?        @relation("ReportCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@map("reports")
+}
+
+model Document {
+  id           Int          @id @default(autoincrement())
+  title        String       @db.VarChar(200)
+  description  String?      @db.Text
+  projectId    Int?         @map("project_id")
+  documentType DocumentType @default(other) @map("document_type")
+  filePath     String       @map("file_path") @db.VarChar(255)
+  fileName     String       @map("file_name") @db.VarChar(255)
+  fileSize     Int?         @map("file_size")
+  uploadedBy   Int?         @map("uploaded_by")
+  uploadedAt   DateTime     @default(now()) @map("uploaded_at")
+
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploader     User?        @relation("DocumentUploader", fields: [uploadedBy], references: [id], onDelete: SetNull)
+
+  @@map("documents")
+}
+
+model ActivityLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int?     @map("user_id")
+  actionType  String   @map("action_type") @db.VarChar(50)
+  entityType  String   @map("entity_type") @db.VarChar(50)
+  entityId    Int?     @map("entity_id")
+  description String?  @db.Text
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User?    @relation("UserActivityLogs", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("activity_logs")
+}
