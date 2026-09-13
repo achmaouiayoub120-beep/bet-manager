@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
-import { PlanStatus, PlanType } from "@prisma/client";
+
 
 const translateStatus = (s: string) => {
   const labels: Record<string, string> = {
@@ -56,7 +56,7 @@ export default async function PlansPage({
     ];
   }
   if (status) {
-    where.status = status as PlanStatus;
+    where.status = status as string;
   }
   if (projectIdStr) {
     where.projectId = parseInt(projectIdStr, 10);

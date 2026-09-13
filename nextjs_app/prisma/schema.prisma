@@ -3,79 +3,17 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
-
-enum Role {
-  admin
-  engineer
-  technician
-  viewer
-}
-
-enum ProjectStatus {
-  planning
-  in_progress
-  on_hold
-  completed
-  cancelled
-}
-
-enum PlanType {
-  architectural
-  structural
-  electrical
-  plumbing
-  other
-}
-
-enum PlanFormat {
-  A0
-  A1
-  A2
-  A3
-  A4
-}
-
-enum PlanStatus {
-  draft
-  review
-  approved
-  rejected
-  obsolete
-}
-
-enum ReportType {
-  technical
-  progress
-  inspection
-  calculation
-  other
-}
-
-enum ReportStatus {
-  draft
-  submitted
-  approved
-  rejected
-}
-
-enum DocumentType {
-  specification
-  contract
-  certificate
-  photo
-  other
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
   id            Int           @id @default(autoincrement())
-  username      String        @unique @db.VarChar(50)
-  email         String        @unique @db.VarChar(100)
-  passwordHash  String        @map("password_hash") @db.VarChar(255)
-  fullName      String        @map("full_name") @db.VarChar(100)
-  role          Role          @default(viewer)
+  username      String        @unique
+  email         String        @unique
+  passwordHash  String        @map("password_hash")
+  fullName      String        @map("full_name")
+  role          String        @default("viewer")
   isActive      Boolean       @default(true) @map("is_active")
   createdAt     DateTime      @default(now()) @map("created_at")
 
@@ -91,15 +29,15 @@ model User {
 
 model Project {
   id          Int           @id @default(autoincrement())
-  projectCode String        @unique @map("project_code") @db.VarChar(20)
-  name        String        @db.VarChar(200)
-  description String?       @db.Text
-  clientName  String?       @map("client_name") @db.VarChar(100)
-  location    String?       @db.VarChar(200)
-  startDate   DateTime?     @map("start_date") @db.Date
-  endDate     DateTime?     @map("end_date") @db.Date
-  status      ProjectStatus @default(planning)
-  budget      Decimal?      @db.Decimal(15, 2)
+  projectCode String        @unique @map("project_code")
+  name        String
+  description String?
+  clientName  String?       @map("client_name")
+  location    String?
+  startDate   DateTime?     @map("start_date")
+  endDate     DateTime?     @map("end_date")
+  status      String        @default("planning")
+  budget      Float?
   createdBy   Int?          @map("created_by")
   createdAt   DateTime      @default(now()) @map("created_at")
 
@@ -113,14 +51,14 @@ model Project {
 
 model Plan {
   id          Int          @id @default(autoincrement())
-  planCode    String       @unique @map("plan_code") @db.VarChar(50)
-  title       String       @db.VarChar(200)
-  description String?      @db.Text
+  planCode    String       @unique @map("plan_code")
+  title       String
+  description String?
   projectId   Int          @map("project_id")
-  planType    PlanType     @default(structural) @map("plan_type")
-  scale       String?      @db.VarChar(20)
-  format      PlanFormat   @default(A3)
-  status      PlanStatus   @default(draft)
+  planType    String       @default("structural") @map("plan_type")
+  scale       String?
+  format      String       @default("A3")
+  status      String       @default("draft")
   createdBy   Int?         @map("created_by")
   createdAt   DateTime     @default(now()) @map("created_at")
 
@@ -134,11 +72,11 @@ model Plan {
 model PlanVersion {
   id               Int      @id @default(autoincrement())
   planId           Int      @map("plan_id")
-  versionNumber    String   @map("version_number") @db.VarChar(20)
-  filePath         String   @map("file_path") @db.VarChar(255)
-  fileName         String   @map("file_name") @db.VarChar(255)
+  versionNumber    String   @map("version_number")
+  filePath         String   @map("file_path")
+  fileName         String   @map("file_name")
   fileSize         Int?     @map("file_size")
-  changeDescription String? @map("change_description") @db.Text
+  changeDescription String? @map("change_description")
   createdBy        Int?     @map("created_by")
   createdAt        DateTime @default(now()) @map("created_at")
 
@@ -150,12 +88,12 @@ model PlanVersion {
 
 model Report {
   id         Int          @id @default(autoincrement())
-  reportCode String       @unique @map("report_code") @db.VarChar(50)
-  title      String       @db.VarChar(200)
-  content    String?      @db.Text
+  reportCode String       @unique @map("report_code")
+  title      String
+  content    String?
   projectId  Int?         @map("project_id")
-  reportType ReportType   @default(technical) @map("report_type")
-  status     ReportStatus @default(draft)
+  reportType String       @default("technical") @map("report_type")
+  status     String       @default("draft")
   createdBy  Int?         @map("created_by")
   createdAt  DateTime     @default(now()) @map("created_at")
 
@@ -167,12 +105,12 @@ model Report {
 
 model Document {
   id           Int          @id @default(autoincrement())
-  title        String       @db.VarChar(200)
-  description  String?      @db.Text
+  title        String
+  description  String?
   projectId    Int?         @map("project_id")
-  documentType DocumentType @default(other) @map("document_type")
-  filePath     String       @map("file_path") @db.VarChar(255)
-  fileName     String       @map("file_name") @db.VarChar(255)
+  documentType String       @default("other") @map("document_type")
+  filePath     String       @map("file_path")
+  fileName     String       @map("file_name")
   fileSize     Int?         @map("file_size")
   uploadedBy   Int?         @map("uploaded_by")
   uploadedAt   DateTime     @default(now()) @map("uploaded_at")
@@ -186,11 +124,11 @@ model Document {
 model ActivityLog {
   id          Int      @id @default(autoincrement())
   userId      Int?     @map("user_id")
-  actionType  String   @map("action_type") @db.VarChar(50)
-  entityType  String   @map("entity_type") @db.VarChar(50)
+  actionType  String   @map("action_type")
+  entityType  String   @map("entity_type")
   entityId    Int?     @map("entity_id")
-  description String?  @db.Text
-  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  description String?
+  ipAddress   String?  @map("ip_address")
   createdAt   DateTime @default(now()) @map("created_at")
 
   user        User?    @relation("UserActivityLogs", fields: [userId], references: [id], onDelete: SetNull)

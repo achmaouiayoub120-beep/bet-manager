@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
-import { DocumentType } from "@prisma/client";
+
 
 const formatFileSize = (bytes: number | null) => {
   if (!bytes) return "—";
@@ -41,7 +41,7 @@ export default async function DocumentsPage({
     ];
   }
   if (type) {
-    where.documentType = type as DocumentType;
+    where.documentType = type as string;
   }
   if (projectIdStr) {
     where.projectId = parseInt(projectIdStr, 10);

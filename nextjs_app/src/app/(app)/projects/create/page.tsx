@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { ProjectStatus } from "@prisma/client";
+
 
 export default function CreateProjectPage() {
   async function createProject(formData: FormData) {
@@ -11,7 +11,7 @@ export default function CreateProjectPage() {
     const name = formData.get("name") as string;
     const clientName = formData.get("client_name") as string;
     const location = formData.get("location") as string;
-    const status = formData.get("status") as ProjectStatus;
+    const status = formData.get("status") as string;
     const startDate = formData.get("start_date") as string;
     const endDate = formData.get("end_date") as string;
     const budgetStr = formData.get("budget") as string;

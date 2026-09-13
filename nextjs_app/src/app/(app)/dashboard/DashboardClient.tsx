@@ -288,7 +288,10 @@ export default function DashboardClient({
                   padding: 10,
                   displayColors: false,
                   callbacks: {
-                    label: (context) => context.parsed.y + " action" + (context.parsed.y > 1 ? "s" : ""),
+                    label: (context) => {
+                      const y = context.parsed.y || 0;
+                      return y + " action" + (y > 1 ? "s" : "");
+                    },
                   },
                 },
               },
@@ -344,7 +347,10 @@ export default function DashboardClient({
                     padding: 10,
                     displayColors: false,
                     callbacks: {
-                      label: (context) => context.parsed.y + " plan" + (context.parsed.y > 1 ? "s" : ""),
+                      label: (context) => {
+                        const y = context.parsed.y || 0;
+                        return y + " plan" + (y > 1 ? "s" : "");
+                      },
                     },
                   },
                 },

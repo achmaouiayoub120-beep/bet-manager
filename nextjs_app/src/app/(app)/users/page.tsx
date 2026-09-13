@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
-import { Role } from "@prisma/client";
+
 
 const translateRole = (role: string) => {
   const labels: Record<string, string> = {
